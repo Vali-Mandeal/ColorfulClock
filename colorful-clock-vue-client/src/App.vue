@@ -12,40 +12,48 @@
 
 <script>
 import * as signalR from "@aspnet/signalr";
+import { ref } from "@vue/reactivity";
+import { onMounted } from "@vue/runtime-core";
 
 export default {
-  name: "App",
-  data: () => ({
+  setup() {
+    const time = ref("No time available");
+    const color = ref({ background: "#320E3B", foreground: "#DBFCFF" });
+    let connection;
+    const receiveTime = "ReceiveTime"
+    const receiveColor = "ReceiveColor"
 
-    time: "No time available",
-    color: {
-      background: "#ccc",
-      foreground: "red",
-    },
-  }),
-
-  created() {
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5243/coloredClockHub")
-      .configureLogging(signalR.LogLevel.Information)
-      .build();
-    connection.start().catch(function (err) {
-      return console.error(err.toString());
+    onMounted(() => {
+      setHubConnection();
+      startHubConnection();
+      subscribeToHubEvents(receiveTime);
+      subscribeToHubEvents(receiveColor);
     });
 
-    connection.on("ReceiveTime", (message) => {
-      console.log("time")
-      console.log(message)
-      this.$data.time = message;
-    });
+    const setHubConnection = () => {
+      connection = new signalR.HubConnectionBuilder()
+        .withUrl("http://localhost:5243/coloredClockHub")
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+    };
 
-    connection.on("ReceiveColor", (message) => {
-      console.log("color")
-      console.log(message)
-      this.$data.color = message.result;
-    });
+    const startHubConnection = () => {
+      connection.start().catch(function (err) {
+        return console.error(err.toString());
+      });
+    };
+
+    const subscribeToHubEvents = (eventName) => {
+      connection.on(eventName, (message) => {
+        if (eventName == receiveTime) time.value = message;
+        else if (eventName == receiveColor) color.value = message.result;
+      });
+    };
+
+    return { time, color };
   },
 };
+
 </script>
 
 <style>
@@ -65,6 +73,6 @@ export default {
 }
 
 #timeText {
-  font-size: 100px;
+  font-size: 120px;
 }
 </style>

@@ -34,7 +34,7 @@ public class TimeBackgroundService : BackgroundService
             await _hubContext.Clients.All.SendAsync("ReceiveTime", time);
 
             bool getCooldown = int.TryParse(_configuration["CooldownForSendingTime"], out int cooldown);
-            await Task.Delay(getCooldown ? cooldown : 5000);
+            await Task.Delay(getCooldown ? cooldown : 1000);
         }
     }
 }
